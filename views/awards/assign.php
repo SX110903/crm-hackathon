@@ -25,6 +25,7 @@
 
     <!-- POST + _method=PUT para asignación (es una actualización) -->
     <form method="POST" action="<?= BASE_URL ?>/?module=awards&action=update&id=<?= $award['AwardID'] ?>">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
       <input type="hidden" name="_method" value="PUT">
       <div class="form-grid">
         <div class="form-group">

@@ -71,6 +71,7 @@ function projectStatusBadge(string $status): string {
               <a href="<?= BASE_URL ?>/?module=projects&action=edit&id=<?= $project['ProjectID'] ?>" class="btn btn-secondary btn-xs">Editar</a>
               <a href="<?= BASE_URL ?>/?module=evaluations&action=create&project_id=<?= $project['ProjectID'] ?>" class="btn btn-warning btn-xs">Evaluar</a>
               <form method="POST" action="<?= BASE_URL ?>/?module=projects&action=delete&id=<?= $project['ProjectID'] ?>" class="form-delete" style="display:inline">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 <button type="submit" class="btn btn-danger btn-xs">Eliminar</button>
               </form>
             </div>

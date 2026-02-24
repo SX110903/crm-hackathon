@@ -46,6 +46,7 @@ class MentorsController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('mentors', 'create'));
+        $this->validateCsrf($this->url('mentors', 'create'));
 
         $data = [
             'firstName'      => $this->post('first_name'),
@@ -89,6 +90,7 @@ class MentorsController extends BaseController
     {
         $this->requireId($id, $this->url('mentors'));
         $this->requirePut($this->url('mentors', 'edit', $id));
+        $this->validateCsrf($this->url('mentors', 'edit', $id));
 
         $data = [
             'firstName'      => $this->post('first_name'),
@@ -119,6 +121,7 @@ class MentorsController extends BaseController
     {
         $this->requireId($id, $this->url('mentors'));
         $this->requirePost($this->url('mentors'));
+        $this->validateCsrf($this->url('mentors'));
 
         try {
             $this->mentorModel->delete($id);

@@ -11,6 +11,7 @@
   <div class="card-header"><h3>Datos del premio</h3></div>
   <div class="card-body">
     <form method="POST" action="<?= BASE_URL ?>/?module=awards&action=store">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
       <div class="form-grid">
         <div class="form-group">
           <label for="award_name">Nombre del premio *</label>

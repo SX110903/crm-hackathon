@@ -13,7 +13,7 @@ class ProjectsController extends BaseController
         $this->projectModel = new ProjectModel();
     }
 
-    // ─── GET: Listado con ranking ────────────────────────────────────────────────
+    // ─── GET: Listado con ranking ESTO ES LO QUE VE EL USUARIO────────────────────────────────────────────────
     public function index(?int $id): void
     {
         $currentPage = $this->currentPage();
@@ -49,10 +49,11 @@ class ProjectsController extends BaseController
         $this->render('projects/create', compact('teams', 'categories', 'statuses'));
     }
 
-    // ─── POST: Guardar proyecto ──────────────────────────────────────────────────
+    // ─── POST: Guardar proyecto aqui realmente hay un pequeño dilema es que todo esto esta verificado tenerlo en cuenta para posterior modificaciones ──────────────────────────────────────────────────
     public function store(?int $id): void
     {
         $this->requirePost($this->url('projects', 'create'));
+        $this->validateCsrf($this->url('projects', 'create'));
 
         $data = [
             'teamId'          => $this->postInt('team_id'),
@@ -102,6 +103,7 @@ class ProjectsController extends BaseController
     {
         $this->requireId($id, $this->url('projects'));
         $this->requirePut($this->url('projects', 'edit', $id));
+        $this->validateCsrf($this->url('projects', 'edit', $id));
 
         $data = [
             'projectName'     => $this->post('project_name'),
@@ -134,6 +136,7 @@ class ProjectsController extends BaseController
     {
         $this->requireId($id, $this->url('projects'));
         $this->requirePost($this->url('projects'));
+        $this->validateCsrf($this->url('projects'));
 
         try {
             $this->projectModel->delete($id);

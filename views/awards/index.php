@@ -43,6 +43,7 @@
               <a href="<?= BASE_URL ?>/?module=awards&action=assign&id=<?= $award['AwardID'] ?>" class="btn btn-success btn-xs">Asignar</a>
               <?php else: ?>
               <form method="POST" action="<?= BASE_URL ?>/?module=awards&action=delete&id=<?= $award['AwardID'] ?>" class="form-delete" style="display:inline">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 <button type="submit" class="btn btn-warning btn-xs">Quitar asignación</button>
               </form>
               <?php endif; ?>

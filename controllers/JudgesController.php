@@ -45,6 +45,7 @@ class JudgesController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('judges', 'create'));
+        $this->validateCsrf($this->url('judges', 'create'));
 
         $data = [
             'firstName'         => $this->post('first_name'),
@@ -88,6 +89,7 @@ class JudgesController extends BaseController
     {
         $this->requireId($id, $this->url('judges'));
         $this->requirePut($this->url('judges', 'edit', $id));
+        $this->validateCsrf($this->url('judges', 'edit', $id));
 
         $data = [
             'firstName'         => $this->post('first_name'),
@@ -118,6 +120,7 @@ class JudgesController extends BaseController
     {
         $this->requireId($id, $this->url('judges'));
         $this->requirePost($this->url('judges'));
+        $this->validateCsrf($this->url('judges'));
 
         try {
             $this->judgeModel->delete($id);

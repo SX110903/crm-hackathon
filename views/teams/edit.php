@@ -16,6 +16,7 @@
   <div class="card-body">
     <!-- POST + hidden _method=PUT para simular PUT en HTML forms -->
     <form method="POST" action="<?= BASE_URL ?>/?module=teams&action=update&id=<?= $team['TeamID'] ?>">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
       <input type="hidden" name="_method" value="PUT">
       <div class="form-grid">
         <div class="form-group">

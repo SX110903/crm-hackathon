@@ -6,24 +6,37 @@ require_once ROOT_PATH . '/models/ParticipantModel.php';
 
 class TeamsController extends BaseController
 {
-    private TeamModel       $teamModel;
+    private TeamModel        $teamModel;
     private ParticipantModel $participantModel;
 
     public function __construct()
     {
         parent::__construct();
-        $this->teamModel       = new TeamModel();
+        $this->teamModel        = new TeamModel();
         $this->participantModel = new ParticipantModel();
     }
 
-    // ─── GET: Listado ────────────────────────────────────────────────────────────
+    // ─── GET: Listado con búsqueda ───────────────────────────────────────────────
     public function index(?int $id): void
     {
         $currentPage = $this->currentPage();
-        $teams       = $this->teamModel->findAll($currentPage);
-        $pagination  = $this->buildPagination($this->teamModel->count(), $currentPage);
+        $search      = trim((string) ($_GET['search'] ?? ''));
 
-        $this->render('teams/index', compact('teams', 'pagination'));
+        if ($search !== '') {
+            $teams      = $this->teamModel->search($search, $currentPage);
+            $pagination = $this->buildPagination(
+                $this->teamModel->countSearch($search),
+                $currentPage
+            );
+        } else {
+            $teams      = $this->teamModel->findAll($currentPage);
+            $pagination = $this->buildPagination(
+                $this->teamModel->count(),
+                $currentPage
+            );
+        }
+
+        $this->render('teams/index', compact('teams', 'pagination', 'search'));
     }
 
     // ─── GET: Detalle ────────────────────────────────────────────────────────────
@@ -31,7 +44,7 @@ class TeamsController extends BaseController
     {
         $this->requireId($id, $this->url('teams'));
 
-        $team     = $this->teamModel->findById($id);
+        $team = $this->teamModel->findById($id);
         if (!$team) {
             $this->setFlash('error', 'Equipo no encontrado.');
             $this->redirect($this->url('teams'));
@@ -55,6 +68,7 @@ class TeamsController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('teams', 'create'));
+        $this->validateCsrf($this->url('teams', 'create'));
 
         $data = [
             'teamName'   => $this->post('team_name'),
@@ -97,13 +111,14 @@ class TeamsController extends BaseController
     {
         $this->requireId($id, $this->url('teams'));
         $this->requirePut($this->url('teams', 'edit', $id));
+        $this->validateCsrf($this->url('teams', 'edit', $id));
 
         $data = [
             'teamName'   => $this->post('team_name'),
             'maxMembers' => $this->postInt('max_members', 5),
         ];
 
-        $errors = $this->teamModel->validate(array_merge($data, ['leaderId' => 1])); // leaderId no cambia
+        $errors = $this->teamModel->validate(array_merge($data, ['leaderId' => 1]));
         if ($errors) {
             $this->setFlash('error', implode('<br>', $errors));
             $this->redirect($this->url('teams', 'edit', $id));
@@ -124,6 +139,7 @@ class TeamsController extends BaseController
     {
         $this->requireId($id, $this->url('teams'));
         $this->requirePost($this->url('teams'));
+        $this->validateCsrf($this->url('teams'));
 
         try {
             $this->teamModel->delete($id);

@@ -5,24 +5,24 @@ declare(strict_types=1);
  * BaseController — Clase abstracta base para todos los controladores.
  *
  * Centraliza:
- *  - Renderizado de vistas con layout
+ *  - Renderizado de vistas con layout (expone $csrfToken y $authUser a todas las vistas)
  *  - Redirección y mensajes flash (sesión)
  *  - Acceso tipado y seguro a datos POST
  *  - Construcción de URLs internas
  *  - Verificación de método HTTP (POST / PUT override)
+ *  - Validación CSRF en todas las mutaciones POST
  *  - Escape de output para prevenir XSS
  *  - Paginación
  */
 abstract class BaseController
 {
-    protected Database $db;
+    protected Database  $db;
+    protected AuthGuard $auth;
 
     public function __construct()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $this->db = Database::getInstance();
+        $this->db   = Database::getInstance();
+        $this->auth = AuthGuard::getInstance();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -31,12 +31,14 @@ abstract class BaseController
 
     /**
      * Renderiza una vista dentro del layout completo.
-     * Expone las variables del array $data en el scope de la vista.
+     * Inyecta automáticamente $csrfToken y $authUser en todas las vistas.
      */
     protected function render(string $view, array $data = []): void
     {
         $data['flash']       = $this->consumeFlash();
         $data['currentPage'] = explode('/', $view)[0];
+        $data['csrfToken']   = $this->auth->csrfToken();
+        $data['authUser']    = $this->auth->currentUser();
 
         extract($data, EXTR_SKIP);
 
@@ -77,7 +79,6 @@ abstract class BaseController
         $_SESSION['flash'] = ['type' => $type, 'message' => $message];
     }
 
-    /** Consume el flash (lo lee y lo borra de la sesión). */
     private function consumeFlash(): array
     {
         $flash = $_SESSION['flash'] ?? [];
@@ -89,29 +90,27 @@ abstract class BaseController
     // ACCESO TIPADO A POST — Evita acceso directo a $_POST
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** Lee un campo POST como string limpio (trim). */
     protected function post(string $key, string $default = ''): string
     {
         return isset($_POST[$key]) ? trim((string) $_POST[$key]) : $default;
     }
 
-    /** Lee un campo POST como entero. */
     protected function postInt(string $key, int $default = 0): int
     {
         return isset($_POST[$key]) ? (int) $_POST[$key] : $default;
     }
 
-    /** Lee un campo POST como flotante. */
     protected function postFloat(string $key, float $default = 0.0): float
     {
         return isset($_POST[$key]) ? (float) $_POST[$key] : $default;
     }
 
-    /** Lee un campo POST como fecha (Y-m-d). Devuelve null si no es válida. */
     protected function postDate(string $key): ?string
     {
         $raw = $this->post($key);
-        if ($raw === '') return null;
+        if ($raw === '') {
+            return null;
+        }
         $date = \DateTime::createFromFormat('Y-m-d', $raw);
         return ($date && $date->format('Y-m-d') === $raw) ? $raw : null;
     }
@@ -125,14 +124,26 @@ abstract class BaseController
         return $_SERVER['REQUEST_METHOD'] === 'POST';
     }
 
-    /**
-     * Verifica que la petición sea POST con _method=PUT.
-     * HTML forms solo soportan GET/POST; usamos override para PUT.
-     */
     protected function isPut(): bool
     {
         return $_SERVER['REQUEST_METHOD'] === 'POST'
             && ($this->post('_method') === 'PUT');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CSRF — Validación en mutaciones POST
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Valida el token CSRF enviado en el formulario.
+     * Redirige al fallbackUrl si el token es inválido.
+     */
+    protected function validateCsrf(string $fallbackUrl): void
+    {
+        if (!$this->auth->validateCsrf($this->post('_csrf_token'))) {
+            $this->setFlash('error', 'Token de seguridad inválido. Vuelve a intentarlo.');
+            $this->redirect($fallbackUrl);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -146,7 +157,7 @@ abstract class BaseController
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // ESCAPE DE OUTPUT — Previene XSS en todas las vistas es una variable Protected
+    // ESCAPE DE OUTPUT — Previene XSS
     // ═══════════════════════════════════════════════════════════════════════════
 
     protected function e(mixed $value): string
@@ -194,7 +205,7 @@ abstract class BaseController
         }
     }
 
-    /** Redirige si $id es null. */
+    /** Redirige si $id es null o <= 0. */
     protected function requireId(?int $id, string $fallbackUrl): void
     {
         if ($id === null || $id <= 0) {

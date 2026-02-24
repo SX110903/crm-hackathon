@@ -51,6 +51,7 @@ class EvaluationsController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('evaluations', 'create'));
+        $this->validateCsrf($this->url('evaluations', 'create'));
 
         $data = [
             'projectId'        => $this->postInt('project_id'),
@@ -82,6 +83,7 @@ class EvaluationsController extends BaseController
     {
         $this->requireId($id, $this->url('evaluations'));
         $this->requirePost($this->url('evaluations'));
+        $this->validateCsrf($this->url('evaluations'));
 
         try {
             $this->evaluationModel->delete($id);

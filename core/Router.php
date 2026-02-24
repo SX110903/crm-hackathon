@@ -4,9 +4,10 @@ declare(strict_types=1);
 /**
  * Router — Singleton que despacha cada petición al controlador correcto.
  *
- * - Solo acepta módulos y acciones declarados en config.php (lista blanca).
- * - Soporta GET para visualización y POST/PUT-override para mutaciones.
- * - Carga los archivos de clase de forma lazy (solo cuando se necesitan).
+ * Seguridad:
+ *  - Lista blanca de módulos y acciones (config.php).
+ *  - AuthGuard aplicado a todos los módulos excepto PUBLIC_MODULES.
+ *  - Carga de clases lazy (solo cuando se necesitan).
  */
 final class Router
 {
@@ -40,12 +41,18 @@ final class Router
             $action = 'index';
         }
 
+        // ── AuthGuard: proteger todos los módulos excepto los públicos ──────────
+        if (!in_array($module, PUBLIC_MODULES, true)) {
+            AuthGuard::getInstance()->requireAuth(
+                BASE_URL . '/?module=auth&action=login'
+            );
+        }
+
         $controllerClass = ucfirst($module) . 'Controller';
 
         $this->loadClass('BaseModel',      ROOT_PATH . '/core/BaseModel.php');
         $this->loadClass('BaseController', ROOT_PATH . '/core/BaseController.php');
 
-        // Los modelos los carga cada controlador con require_once
         $controllerFile = ROOT_PATH . "/controllers/{$controllerClass}.php";
         if (!file_exists($controllerFile)) {
             $this->render404("Controlador '{$controllerClass}' no encontrado.");
@@ -91,7 +98,7 @@ final class Router
         echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
             . '<title>404 — ' . APP_NAME . '</title></head><body>'
             . '<h1 style="font-family:sans-serif;color:#ef4444">404 — Página no encontrada</h1>';
-        if ($detail) {
+        if ($detail && APP_ENV === 'development') {
             echo '<p style="font-family:sans-serif;color:#64748b">'
                 . htmlspecialchars($detail, ENT_QUOTES, 'UTF-8') . '</p>';
         }

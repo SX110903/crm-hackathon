@@ -43,6 +43,7 @@ class AwardsController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('awards', 'create'));
+        $this->validateCsrf($this->url('awards', 'create'));
 
         $data = [
             'awardName' => $this->post('award_name'),
@@ -87,6 +88,7 @@ class AwardsController extends BaseController
     {
         $this->requireId($id, $this->url('awards'));
         $this->requirePut($this->url('awards', 'assign', $id));
+        $this->validateCsrf($this->url('awards', 'assign', $id));
 
         $data = [
             'projectId'   => $this->postInt('project_id'),
@@ -114,6 +116,7 @@ class AwardsController extends BaseController
     {
         $this->requireId($id, $this->url('awards'));
         $this->requirePost($this->url('awards'));
+        $this->validateCsrf($this->url('awards'));
 
         try {
             $this->awardModel->unassign($id);

@@ -39,6 +39,7 @@
             <div class="btn-group">
               <a href="<?= BASE_URL ?>/?module=judges&action=edit&id=<?= $judge['JudgeID'] ?>" class="btn btn-secondary btn-xs">Editar</a>
               <form method="POST" action="<?= BASE_URL ?>/?module=judges&action=delete&id=<?= $judge['JudgeID'] ?>" class="form-delete" style="display:inline">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 <button type="submit" class="btn btn-danger btn-xs">Eliminar</button>
               </form>
             </div>

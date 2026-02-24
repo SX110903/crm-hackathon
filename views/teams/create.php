@@ -11,6 +11,7 @@
   <div class="card-header"><h3>Datos del equipo</h3></div>
   <div class="card-body">
     <form method="POST" action="<?= BASE_URL ?>/?module=teams&action=store">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
       <div class="form-grid">
         <div class="form-group">
           <label for="team_name">Nombre del equipo *</label>

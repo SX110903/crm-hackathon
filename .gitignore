@@ -1,0 +1,20 @@
+# ─── Variables de entorno (¡NUNCA al repo!) ─────────────
+.env
+
+# ─── Dependencias de editores ────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ─── Sistemas operativos ─────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Logs ────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Cache ───────────────────────────────────────────────
+cache/
+tmp/

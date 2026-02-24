@@ -14,6 +14,7 @@
   <div class="card-header"><h3>Modificar proyecto</h3></div>
   <div class="card-body">
     <form method="POST" action="<?= BASE_URL ?>/?module=projects&action=update&id=<?= $project['ProjectID'] ?>">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
       <input type="hidden" name="_method" value="PUT">
       <div class="form-grid">
         <div class="form-group">

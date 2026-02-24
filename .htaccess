@@ -1,7 +1,43 @@
 Options -Indexes
 
-# Redirigir todo al front controller excepto assets reales
+# ─── Redirigir todo al front controller excepto assets reales ─────────────────
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
+
+# ─── Bloquear acceso directo a ficheros sensibles ─────────────────────────────
+<FilesMatch "\.(env|sql|log|md|gitignore)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso directo al directorio database/
+<IfModule mod_rewrite.c>
+    RewriteRule ^database/ - [F,L]
+</IfModule>
+
+# ─── Cabeceras de seguridad HTTP ──────────────────────────────────────────────
+<IfModule mod_headers.c>
+    # Previene detección automática de tipo MIME (MIME-sniffing)
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Protección contra clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Filtro XSS del navegador (complementario a CSP)
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Política de referrer al salir del sitio
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Desactiva APIs peligrosas del navegador
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # Eliminar cabecera que revela que usamos PHP
+    Header always unset X-Powered-By
+</IfModule>
+
+# ─── Ocultar versión de PHP ───────────────────────────────────────────────────
+<IfModule mod_php.c>
+    php_flag expose_php Off
+</IfModule>

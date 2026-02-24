@@ -47,6 +47,7 @@ class ParticipantsController extends BaseController
     public function store(?int $id): void
     {
         $this->requirePost($this->url('participants', 'create'));
+        $this->validateCsrf($this->url('participants', 'create'));
 
         $data = [
             'firstName'   => $this->post('first_name'),
@@ -93,6 +94,7 @@ class ParticipantsController extends BaseController
     {
         $this->requireId($id, $this->url('participants'));
         $this->requirePut($this->url('participants', 'edit', $id));
+        $this->validateCsrf($this->url('participants', 'edit', $id));
 
         $data = [
             'firstName'   => $this->post('first_name'),
@@ -125,6 +127,7 @@ class ParticipantsController extends BaseController
     {
         $this->requireId($id, $this->url('participants'));
         $this->requirePost($this->url('participants'));
+        $this->validateCsrf($this->url('participants'));
 
         try {
             $this->participantModel->delete($id);
