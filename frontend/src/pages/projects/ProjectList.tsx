@@ -1,0 +1,133 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getProjects, deleteProject, Project } from '../../api/projects';
+import Pagination from '../../components/Pagination';
+import ConfirmModal from '../../components/ConfirmModal';
+
+const statusBadge: Record<string, string> = {
+  draft: 'badge-gray',
+  submitted: 'badge-blue',
+  approved: 'badge-green',
+  rejected: 'badge-red',
+};
+
+const ProjectList: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['projects', page, search],
+    queryFn: () => getProjects(page, search),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteProject(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setDeleteTarget(null);
+    },
+  });
+
+  const projects: Project[] = data?.data?.data ?? [];
+  const totalPages: number = data?.data?.last_page ?? 1;
+  const total: number = data?.data?.total ?? 0;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+  };
+
+  return (
+    <div className="list-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-heading">Projects</h1>
+          <p className="page-subheading">{total} total projects</p>
+        </div>
+        <Link to="/projects/new" className="btn btn-primary">+ Add Project</Link>
+      </div>
+
+      <div className="list-controls">
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            type="text"
+            className="form-input search-input"
+            placeholder="Search projects..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+          />
+          <button type="submit" className="btn btn-secondary">Search</button>
+          {search && (
+            <button type="button" className="btn btn-outline" onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}>Clear</button>
+          )}
+        </form>
+      </div>
+
+      {isLoading && <div className="loading-container"><div className="spinner"></div></div>}
+      {isError && <div className="alert alert-error">Failed to load projects.</div>}
+
+      {!isLoading && !isError && (
+        <>
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Technology Stack</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.length === 0 ? (
+                  <tr><td colSpan={6} className="table-empty">No projects found.</td></tr>
+                ) : (
+                  projects.map((p, idx) => (
+                    <tr key={p.id}>
+                      <td>{(page - 1) * 15 + idx + 1}</td>
+                      <td><strong>{p.name}</strong></td>
+                      <td>{p.category ?? '—'}</td>
+                      <td>{p.technology_stack ?? '—'}</td>
+                      <td>
+                        <span className={`badge ${statusBadge[p.status ?? ''] ?? 'badge-gray'}`}>
+                          {p.status ?? 'draft'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/projects/${p.id}/edit`)}>Edit</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(p)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="Delete Project"
+          message={`Are you sure you want to delete "${deleteTarget.name}"?`}
+          onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+          confirmLabel={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+        />
+      )}
+    </div>
+  );
+};
+
+export default ProjectList;
